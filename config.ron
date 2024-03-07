@@ -1,5 +1,5 @@
 Config(
-    total_timesteps: 10000,
+    total_timesteps: 210000,
     rollout: (
         steps: 32,
         num_envs: 64,

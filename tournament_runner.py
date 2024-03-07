@@ -285,3 +285,4 @@ if __name__ == "__main__":
     else:
         print('No compatible bots found for tournament')
         exit()
+        

@@ -6,10 +6,7 @@ from entity_gym.env import Observation
 from entity_gym.runner import CliRunner
 from entity_gym.env import *
 
-class TensorRTS(Environment):
-    """
-LinearRTS, the first epoch of TensorRTS, is intended to be the simplest RTS game.
-    """
+class BaseTensorRTS(Environment, metaclass=abc.ABCMeta): 
 
     def __init__(
         self,
@@ -17,9 +14,9 @@ LinearRTS, the first epoch of TensorRTS, is intended to be the simplest RTS game
         nclusters: int = 6,
         ntensors: int = 2,
         maxdots: int = 9,
-        enable_prinouts : bool = True
+        enable_printouts : bool = True
     ):
-        self.enable_printouts = enable_prinouts
+        self.enable_printouts = enable_printouts
         
         if self.enable_printouts:
             print(f"LinearRTS -- Mapsize: {mapsize}")
@@ -44,7 +41,7 @@ LinearRTS, the first epoch of TensorRTS, is intended to be the simplest RTS game
                 ["advance", "retreat", "rush", "boom"],
             ),
         }
-
+    
     def reset(self) -> Observation:
         positions = set()
         while len(positions) < self.nclusters // 2:
@@ -65,6 +62,40 @@ LinearRTS, the first epoch of TensorRTS, is intended to be the simplest RTS game
 
         return self.observe()
     
+    @abc.abstractmethod
+    def tensor_power(self, tensor_index) -> float :
+        pass
+
+    @abc.abstractmethod
+    def observe(self) -> Observation:
+        pass
+
+    @abc.abstractmethod
+    def act(self, actions: Mapping[ActionName, Action], trigger_default_opponent_action : bool = True, is_player_two : bool = False) -> Observation:
+        pass
+
+    @abc.abstractmethod
+    def opponent_act(self): 
+        pass 
+    
+    @abc.abstractmethod
+    def collect_dots(self, position):
+        pass
+
+    @abc.abstractmethod
+    def print_universe(self):
+        pass
+
+    def is_game_over(self): 
+        return self.observe().done
+    
+class TensorRTS(BaseTensorRTS):
+    """
+LinearRTS, the first epoch of TensorRTS, is intended to be the simplest RTS game.
+    """
+    def __init__(self, mapsize: int = 32, nclusters: int = 6, ntensors: int = 2, maxdots: int = 9, enable_printouts: bool = True):
+        super().__init__(mapsize, nclusters, ntensors, maxdots, enable_printouts)
+
     def tensor_power(self, tensor_index) -> float :
         f = self.tensors[tensor_index][3] * self.tensors[tensor_index][3] +  self.tensors[tensor_index][2]
         if self.enable_printouts:
@@ -182,25 +213,6 @@ LinearRTS, the first epoch of TensorRTS, is intended to be the simplest RTS game
             print("  ", end="")
         print(" ##")
 
-class Interactive_TensorRTS(TensorRTS): 
-    def __init__(self,
-        mapsize: int = 32,
-        nclusters: int = 6,
-        ntensors: int = 2,
-        maxdots: int = 9, 
-        enable_printouts : bool = True): 
-        self.is_game_over = False
-
-        super().__init__(mapsize, nclusters, ntensors, maxdots, enable_prinouts=enable_printouts)
-
-    def act(self, actions: Mapping[ActionName, Action],  trigger_default_opponent_action : bool = True, is_player_two : bool = False, print_universe : bool = False) -> Observation:
-        obs_result = super().act(actions, False, is_player_two)
-
-        if (obs_result.done == True):
-            self.is_game_over = True
-
-        return obs_result
-
 class Agent(metaclass=abc.ABCMeta):
     def __init__(self, initial_observation : Observation, action_space : Dict[ActionName, ActionSpace]):
         self.previous_game_state = initial_observation
@@ -252,8 +264,8 @@ class Random_Agent(Agent):
         
         return mapping
     
-    def on_game_start(self) -> None:
-        return super().on_game_start()
+    def on_game_start(self, is_player_one : bool, is_player_two : bool) -> None:
+        return super().on_game_start(is_player_one, is_player_two)
     
     def on_game_over(self, did_i_win : bool, did_i_tie : bool) -> None:
         return super().on_game_over(did_i_win, did_i_tie)
@@ -266,7 +278,7 @@ class GameResult():
 
 class GameRunner(): 
     def __init__(self, environment = None, enable_printouts : bool = False):
-        self.game = Interactive_TensorRTS(enable_printouts=enable_printouts)
+        self.game = TensorRTS(enable_printouts=enable_printouts)
         self.game.reset()
 
         self.player_one = None
@@ -289,7 +301,7 @@ class GameRunner():
 
         while(self.game.is_game_over is False):
             #take moves and pass updated environments to agents
-            game_state = self.game.act(self.player_one.take_turn(game_state))
+            game_state = self.game.act(self.player_one.take_turn(game_state), False)
             
             if (self.game.is_game_over is False):
                 if self.player_two is None: 
@@ -320,7 +332,7 @@ class GameRunner():
 
 if __name__ == "__main__":  # This is to run wth agents
     runner = GameRunner()
-    init_observation = runner.set_new_game()
+    init_observation = runner.game.observe()
     random_agent = Random_Agent(init_observation, runner.game.action_space())
 
     runner.assign_players(random_agent)
@@ -330,4 +342,3 @@ if __name__ == "__main__":  #this is to run cli
     env = TensorRTS()
     # The `CliRunner` can run any environment with a command line interface.
     CliRunner(env).run()
-    
