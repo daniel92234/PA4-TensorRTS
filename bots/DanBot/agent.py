@@ -21,8 +21,8 @@ class DanBot(Agent):
     def take_turn(self, current_game_state : Observation) -> Mapping[ActionName, Action]:
         return self.current.act(Observation)
     
-    def on_game_start(self) -> None:
-        return super().on_game_start()
+    def on_game_start(self, is_player_one : bool, is_player_two : bool) -> None:
+        return super().on_game_start(is_player_one, is_player_two)
     
     def on_game_over(self, did_i_win : bool, did_i_tie : bool) -> None:
         return super().on_game_over(did_i_win, did_i_tie)
