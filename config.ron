@@ -1,5 +1,5 @@
 Config(
-    total_timesteps: 36000,
+    total_timesteps: 60000,
     rollout: (
         steps: 32,
         num_envs: 64,
@@ -12,5 +12,5 @@ Config(
     cuda: true,
     track: true,
     wandb_project_name: "enn-tensorRTS",
-    wandb_entity: "Danny Nagura",
+    wandb_entity: "dn946718",
 )

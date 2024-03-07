@@ -2,3 +2,4 @@ Results.txt
 __pycache__
 runs
 checkpoints
+wandb
