@@ -93,7 +93,7 @@ class TensorRTS(BaseTensorRTS):
     """
 LinearRTS, the first epoch of TensorRTS, is intended to be the simplest RTS game.
     """
-    def __init__(self, mapsize: int = 32, nclusters: int = 6, ntensors: int = 2, maxdots: int = 9, enable_printouts: bool = True):
+    def __init__(self, mapsize: int = 32, nclusters: int = 6, ntensors: int = 2, maxdots: int = 9, enable_printouts: bool = False):
         super().__init__(mapsize, nclusters, ntensors, maxdots, enable_printouts)
 
     def tensor_power(self, tensor_index) -> float :
